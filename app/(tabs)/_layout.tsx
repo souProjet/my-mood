@@ -1,43 +1,92 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
-
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
+        tabBarActiveTintColor: '#000',
+        tabBarInactiveTintColor: 'rgba(0, 0, 0, 0.4)',
+        tabBarStyle: {
+          position: 'absolute',
+          left: 16,
+          right: 16,
+          bottom: 16,
+          elevation: 0,
+          borderTopWidth: 0,
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: 24,
+          height: 64,
+          paddingBottom: 8,
+          paddingTop: 12,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 8,
           },
-          default: {},
-        }),
+          shadowOpacity: 0.15,
+          shadowRadius: 16,
+          ...Platform.select({
+            ios: {
+              backdropFilter: 'blur(20px)',
+            },
+          }),
+        },
+        headerShown: false,
+        tabBarShowLabel: true,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          marginTop: 4,
+        },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Mood',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "add-circle" : "add-circle-outline"} 
+              size={28} 
+              color={color}
+              style={{
+                transform: [{ scale: focused ? 1.1 : 1 }]
+              }}
+            />
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="stats"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Stats',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "stats-chart" : "stats-chart-outline"}
+              size={24} 
+              color={color}
+              style={{
+                transform: [{ scale: focused ? 1.1 : 1 }]
+              }}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons 
+              name={focused ? "settings" : "settings-outline"}
+              size={24} 
+              color={color}
+              style={{
+                transform: [{ scale: focused ? 1.1 : 1 }]
+              }}
+            />
+          ),
         }}
       />
     </Tabs>
