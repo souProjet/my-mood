@@ -32,31 +32,31 @@ interface MoodTypeConfig {
 const MOOD_TYPES: Record<MoodType, MoodTypeConfig> = {
   mood: {
     title: 'Mon humeur',
-    question: 'Comment te sens-tu maintenant ?',
-    emojis: ['😔', '😐', '😊'],
-    gradient: ['#FF6B6B', '#FFB1B1'] as const,
-    description: 'Ton humeur générale reflète ton état émotionnel du moment',
+    question: 'Comment te sens-tu ?',
+    emojis: ['😔', '😕', '😐', '😊', '😄'],
+    gradient: ['#FFE3E3', '#FFB1B1'] as const,
+    description: '',
   },
   energy: {
     title: 'Mon énergie',
-    question: 'Quel est ton niveau d\'énergie ?',
-    emojis: ['🔋', '⚡', '💪'],
-    gradient: ['#4D96FF', '#96BAFF'] as const,
-    description: 'Ton niveau d\'énergie impacte ta productivité et ton bien-être',
+    question: 'Ton niveau d\'énergie ?',
+    emojis: ['😴', '😪', '😐', '⚡', '💪'],
+    gradient: ['#E3F2FF', '#96BAFF'] as const,
+    description: '',
   },
   anxiety: {
     title: 'Mon anxiété',
-    question: 'Comment gères-tu ton stress ?',
-    emojis: ['😰', '😌', '🧘'],
-    gradient: ['#6C63FF', '#B4B0FF'] as const,
-    description: 'Le stress fait partie de la vie, mais il est important de le gérer',
+    question: 'Ton niveau de stress ?',
+    emojis: ['😰', '😥', '😌', '😊', '🧘'],
+    gradient: ['#F0EFFF', '#B4B0FF'] as const,
+    description: '',
   },
   focus: {
     title: 'Ma concentration',
-    question: 'Es-tu concentré aujourd\'hui ?',
-    emojis: ['🌫️', '🎯', '🎪'],
-    gradient: ['#FF9F7F', '#FFB992'] as const,
-    description: 'Ta capacité à rester concentré est essentielle pour atteindre tes objectifs',
+    question: 'Ta concentration ?',
+    emojis: ['🌫️', '😵', '😐', '🎯', '🧠'],
+    gradient: ['#FFE8E0', '#FFB992'] as const,
+    description: '',
   },
 };
 
@@ -71,30 +71,15 @@ export default function MoodScreen() {
     focus: 0.5,
   });
 
-  const progress = useSharedValue(0);
   const scale = useSharedValue(1);
-  const slideY = useSharedValue(50);
+  const slideY = useSharedValue(0);
 
-  useEffect(() => {
-    checkTodayEntry();
-    progress.value = withSpring(1, { mass: 0.5, damping: 12 });
-    slideY.value = withSpring(0, { mass: 0.5, damping: 12 });
-  }, []);
+  const currentMood = MOOD_ORDER[currentMoodIndex];
+  const config = MOOD_TYPES[currentMood] || MOOD_TYPES.mood;
 
-  const checkTodayEntry = async () => {
-    try {
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const existingDataStr = await AsyncStorage.getItem('moodData');
-      const existingData = existingDataStr ? JSON.parse(existingDataStr) : [];
-      
-      const todayEntry = existingData.find((entry: any) => entry.date === today);
-      if (todayEntry) {
-        router.replace('/stats');
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
-  };
+  if (!config) {
+    return null;
+  }
 
   const saveMoodData = async () => {
     try {
@@ -138,21 +123,11 @@ export default function MoodScreen() {
     }
   };
 
-  const handleSkip = () => {
-    if (currentMoodIndex < MOOD_ORDER.length - 1) {
-      setCurrentMoodIndex(prev => prev + 1);
-    }
-  };
-
-  const currentMood = MOOD_ORDER[currentMoodIndex];
-  const config = MOOD_TYPES[currentMood];
-
   const containerStyle = useAnimatedStyle(() => ({
     transform: [
       { scale: scale.value },
       { translateY: slideY.value }
     ],
-    opacity: progress.value,
   }));
 
   return (
@@ -164,15 +139,11 @@ export default function MoodScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        <Animated.View 
-          entering={FadeIn.duration(800)}
-          style={[styles.header, containerStyle]}
-        >
+        <View style={styles.header}>
           <Text style={styles.date}>
             {format(new Date(), 'd MMMM', { locale: fr })}
           </Text>
-          <Text style={styles.subtitle}>Comment vas-tu aujourd'hui ?</Text>
-        </Animated.View>
+        </View>
 
         <Animated.View
           key={currentMood}
@@ -183,32 +154,20 @@ export default function MoodScreen() {
           <View style={styles.questionContainer}>
             <Text style={styles.title}>{config.title}</Text>
             <Text style={styles.question}>{config.question}</Text>
-            <Text style={styles.description}>{config.description}</Text>
           </View>
 
           <View style={styles.sliderContainer}>
             <MoodSlider
-              title={config.title}
               emojis={config.emojis}
               value={moodValues[currentMood]}
               onValueChange={handleMoodChange}
             />
           </View>
-
-          <Pressable 
-            onPress={handleSkip} 
-            style={({pressed}) => [
-              styles.skipButton,
-              pressed && styles.skipButtonPressed
-            ]}
-          >
-            <Text style={styles.skipText}>Passer cette question</Text>
-          </Pressable>
         </Animated.View>
 
         <View style={styles.progressContainer}>
           {MOOD_ORDER.map((_, index) => (
-            <Animated.View 
+            <View 
               key={index}
               style={[
                 styles.progressDot,
@@ -232,15 +191,16 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 20,
   },
   header: {
     width: '100%',
     paddingHorizontal: 24,
-    marginBottom: 20,
+    paddingTop: 40,
+    alignItems: 'center',
   },
   date: {
-    fontSize: 42,
+    fontSize: 32,
     fontWeight: '700',
     color: '#000',
     textTransform: 'capitalize',
@@ -255,37 +215,30 @@ const styles = StyleSheet.create({
   },
   questionContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
     width: '100%',
   },
   title: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '700',
     color: '#000',
     opacity: 0.9,
-    marginBottom: 12,
+    marginBottom: 4,
     textAlign: 'center',
   },
   question: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '500',
     color: '#000',
     opacity: 0.8,
     textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 32,
-  },
-  description: {
-    fontSize: 16,
-    color: '#000',
-    opacity: 0.6,
-    textAlign: 'center',
-    maxWidth: '80%',
-    lineHeight: 22,
+    marginBottom: 8,
+    lineHeight: 24,
   },
   sliderContainer: {
     width: '100%',
     alignItems: 'center',
+    marginTop: 20,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -293,9 +246,9 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: 'rgba(0,0,0,0.1)',
   },
   progressDotActive: {
@@ -304,26 +257,5 @@ const styles = StyleSheet.create({
   },
   progressDotCompleted: {
     backgroundColor: '#000',
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#000',
-    opacity: 0.6,
-    marginTop: 8,
-  },
-  skipButton: {
-    marginTop: 30,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  skipButtonPressed: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  skipText: {
-    fontSize: 16,
-    color: '#000',
-    opacity: 0.6,
-    fontWeight: '500',
   },
 });

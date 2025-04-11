@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Switch, Platform, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import Animated, { FadeIn, SlideInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -96,6 +97,43 @@ export default function SettingsScreen() {
     }
   };
 
+  const resetData = async () => {
+    try {
+      await AsyncStorage.removeItem('moodData');
+      Alert.alert(
+        'Données réinitialisées',
+        'Toutes les données ont été supprimées avec succès.',
+        [
+          {
+            text: 'OK',
+            onPress: () => router.replace('/')
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Error:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la réinitialisation des données.');
+    }
+  };
+
+  const handleResetData = () => {
+    Alert.alert(
+      'Réinitialiser les données',
+      'Êtes-vous sûr de vouloir supprimer toutes les données ? Cette action est irréversible.',
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel'
+        },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: resetData
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       <Animated.View 
@@ -143,6 +181,27 @@ export default function SettingsScreen() {
             </View>
           </View>
           <Ionicons name="chevron-forward" size={24} color="#000" />
+        </TouchableOpacity>
+      </Animated.View>
+
+      <Animated.View 
+        entering={SlideInRight.delay(400).duration(500)}
+        style={styles.section}
+      >
+        <TouchableOpacity
+          style={styles.resetButton}
+          onPress={handleResetData}
+        >
+          <View style={styles.resetButtonContent}>
+            <Ionicons name="trash-outline" size={24} color="#FF3B30" />
+            <View style={styles.resetTextContainer}>
+              <Text style={styles.resetLabel}>Réinitialiser les données</Text>
+              <Text style={styles.resetDescription}>
+                Supprimer toutes les données enregistrées
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#FF3B30" />
         </TouchableOpacity>
       </Animated.View>
 
@@ -228,5 +287,32 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.5,
+  },
+  resetButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  resetButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  resetTextContainer: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  resetLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FF3B30',
+    marginBottom: 4,
+  },
+  resetDescription: {
+    fontSize: 15,
+    color: '#666',
   },
 });
