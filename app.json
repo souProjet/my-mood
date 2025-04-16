@@ -17,7 +17,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.mymood.app"
+      "bundleIdentifier": "com.mymood.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -37,6 +40,14 @@
     "experiments": {
       "typedRoutes": true,
       "newArchEnabled": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "547aa8dc-c073-416a-9576-df73ba8f94b2"
+      }
     }
   }
 }

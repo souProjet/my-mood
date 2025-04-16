@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, Platform, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Switch, Platform, TouchableOpacity, Alert, Share } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import Animated, { FadeIn, SlideInRight } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -134,6 +135,59 @@ export default function SettingsScreen() {
     );
   };
 
+  const exportData = async () => {
+    try {
+      const data = await AsyncStorage.getItem('moodData');
+      if (!data) {
+        Alert.alert('Erreur', 'Aucune donnée à exporter.');
+        return;
+      }
+
+      await Share.share({
+        message: data,
+        title: 'Données d\'humeur',
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'exportation des données.');
+    }
+  };
+
+  const importData = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const response = await fetch(result.assets[0].uri);
+      const content = await response.text();
+
+      try {
+        JSON.parse(content); // Validate JSON
+        await AsyncStorage.setItem('moodData', content);
+        Alert.alert(
+          'Succès',
+          'Les données ont été importées avec succès.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.replace('/')
+            }
+          ]
+        );
+      } catch {
+        Alert.alert('Erreur', 'Le fichier sélectionné n\'est pas valide.');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors de l\'importation des données.');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Animated.View 
@@ -188,6 +242,38 @@ export default function SettingsScreen() {
         entering={SlideInRight.delay(400).duration(500)}
         style={styles.section}
       >
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={exportData}
+        >
+          <View style={styles.actionButtonContent}>
+            <Ionicons name="arrow-down-outline" size={24} color="#007AFF" />
+            <View style={styles.actionTextContainer}>
+              <Text style={[styles.actionLabel, { color: '#007AFF' }]}>Exporter les données</Text>
+              <Text style={styles.actionDescription}>
+                Sauvegarder vos données dans un fichier
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#007AFF" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={importData}
+        >
+          <View style={styles.actionButtonContent}>
+            <Ionicons name="arrow-up-outline" size={24} color="#007AFF" />
+            <View style={styles.actionTextContainer}>
+              <Text style={[styles.actionLabel, { color: '#007AFF' }]}>Importer les données</Text>
+              <Text style={styles.actionDescription}>
+                Restaurer vos données depuis un fichier
+              </Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={24} color="#007AFF" />
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.resetButton}
           onPress={handleResetData}
@@ -312,6 +398,32 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   resetDescription: {
+    fontSize: 15,
+    color: '#666',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  actionButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  actionTextContainer: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  actionLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  actionDescription: {
     fontSize: 15,
     color: '#666',
   },

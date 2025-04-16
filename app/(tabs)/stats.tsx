@@ -38,12 +38,12 @@ const chartConfig = {
     fontSize: 11,
     fontWeight: '600',
   },
-  paddingRight: 0,
+  paddingRight: 16,
   paddingLeft: 0,
-  withVerticalLabels: false,
-  withHorizontalLabels: false,
+  withVerticalLabels: true,
+  withHorizontalLabels: true,
   withVerticalLines: false,
-  withHorizontalLines: false,
+  withHorizontalLines: true,
   fromZero: true,
   yAxisInterval: 1,
   yAxisSuffix: '',
@@ -87,17 +87,32 @@ export default function StatsScreen() {
 
   const loadMoodData = async () => {
     try {
-      console.log('Tentative de chargement des données...');
+      // D'abord, effacer les données existantes pour les tests
+      await AsyncStorage.clear();
+      
       const data = await AsyncStorage.getItem('moodData');
-      console.log('Données brutes de AsyncStorage:', data);
       
       if (data) {
         const parsedData: MoodEntry[] = JSON.parse(data);
-        console.log('Données parsées:', parsedData);
         parsedData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setMoodData(parsedData);
       } else {
-        console.log('Aucune donnée trouvée dans AsyncStorage');
+        // Données de test
+        const today = new Date();
+        const testData: MoodEntry[] = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(today.getDate() - (6 - i));
+          return {
+            date: date.toISOString().split('T')[0],
+            mood: Math.floor(Math.random() * 3) + 3, // 3-5
+            energy: Math.floor(Math.random() * 3) + 2, // 2-4
+            anxiety: Math.floor(Math.random() * 4) + 1, // 1-4
+            focus: Math.floor(Math.random() * 3) + 3, // 3-5
+          };
+        });
+
+        await AsyncStorage.setItem('moodData', JSON.stringify(testData));
+        setMoodData(testData);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
@@ -105,11 +120,8 @@ export default function StatsScreen() {
   };
 
   const prepareChartData = (dataKey: keyof Omit<MoodEntry, 'date'>) => {
-    console.log('Préparation des données pour:', dataKey);
-    console.log('Données actuelles:', moodData);
     
     if (moodData.length === 0) {
-      console.log('Aucune donnée disponible');
       return {
         labels: [''],
         datasets: [{
@@ -120,34 +132,18 @@ export default function StatsScreen() {
       };
     }
 
-    // Filtrer les entrées du jour actuel uniquement
-    const today = new Date().toISOString().split('T')[0];
-    console.log('Date d\'aujourd\'hui:', today);
-    const todayEntries = moodData.filter(entry => entry.date.startsWith(today));
-    console.log('Entrées d\'aujourd\'hui:', todayEntries);
     
-    if (todayEntries.length === 0) {
-      console.log('Aucune entrée pour aujourd\'hui');
-      return {
-        labels: [''],
-        datasets: [{
-          data: [0],
-          color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          strokeWidth: 2,
-        }]
-      };
-    }
+    // Formater les labels et les données
+    const labels = moodData.map(entry => 
+      format(new Date(entry.date), 'dd/MM', { locale: fr })
+    );
+    const data = moodData.map(entry => entry[dataKey]);
 
-    // Utiliser la dernière entrée du jour
-    const lastEntry = todayEntries[todayEntries.length - 1];
-    const value = lastEntry[dataKey] || 0;
-    console.log('Valeur pour', dataKey, ':', value);
-    
     return {
-      labels: [''],
+      labels,
       datasets: [
         {
-          data: [value],
+          data,
           color: (opacity = 1) => `rgba(${hexToRgb(CHART_CONFIGS[dataKey].color)}, ${opacity})`,
           strokeWidth: 2,
         },
@@ -224,11 +220,9 @@ export default function StatsScreen() {
                   segments={4}
                   withInnerLines={false}
                   yAxisInterval={1}
-                  yAxisSuffix=""
-                  xAxisLabel=""
                   hidePointsAtIndex={[]}
-                  withDots={true}
                   withShadow={false}
+                  getDotColor={(dataPoint) => config.color}
                 />
               </Animated.View>
             ))}
