@@ -87,32 +87,12 @@ export default function StatsScreen() {
 
   const loadMoodData = async () => {
     try {
-      // D'abord, effacer les données existantes pour les tests
-      await AsyncStorage.clear();
-      
       const data = await AsyncStorage.getItem('moodData');
       
       if (data) {
         const parsedData: MoodEntry[] = JSON.parse(data);
         parsedData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
         setMoodData(parsedData);
-      } else {
-        // Données de test
-        const today = new Date();
-        const testData: MoodEntry[] = Array.from({ length: 7 }, (_, i) => {
-          const date = new Date();
-          date.setDate(today.getDate() - (6 - i));
-          return {
-            date: date.toISOString().split('T')[0],
-            mood: Math.floor(Math.random() * 3) + 3, // 3-5
-            energy: Math.floor(Math.random() * 3) + 2, // 2-4
-            anxiety: Math.floor(Math.random() * 4) + 1, // 1-4
-            focus: Math.floor(Math.random() * 3) + 3, // 3-5
-          };
-        });
-
-        await AsyncStorage.setItem('moodData', JSON.stringify(testData));
-        setMoodData(testData);
       }
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
