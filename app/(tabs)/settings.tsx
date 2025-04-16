@@ -31,7 +31,7 @@ export default function SettingsScreen() {
     try {
       const enabled = await AsyncStorage.getItem('notificationsEnabled');
       const time = await AsyncStorage.getItem('notificationTime');
-      
+
       if (enabled === null) {
         await saveSettings(true, new Date(defaultTime));
       } else {
@@ -52,7 +52,7 @@ export default function SettingsScreen() {
     try {
       await AsyncStorage.setItem('notificationsEnabled', enabled.toString());
       await AsyncStorage.setItem('notificationTime', time.toISOString());
-      
+
       if (enabled) {
         await scheduleNotification(time);
       } else {
@@ -91,7 +91,7 @@ export default function SettingsScreen() {
   const handleTimeChange = (event: any, selectedTime?: Date) => {
     const currentDate = selectedTime || notificationTime;
     setShowTimePicker(false);
-    
+
     if (selectedTime) {
       setNotificationTime(currentDate);
       saveSettings(notificationsEnabled, currentDate);
@@ -190,14 +190,14 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <Animated.View 
+      <Animated.View
         entering={FadeIn.duration(800)}
         style={styles.header}
       >
         <Text style={styles.title}>Paramètres</Text>
       </Animated.View>
 
-      <Animated.View 
+      <Animated.View
         entering={SlideInRight.delay(200).duration(500)}
         style={styles.section}
       >
@@ -217,17 +217,24 @@ export default function SettingsScreen() {
           />
         </View>
 
+      </Animated.View>
+
+      <Animated.View
+        entering={SlideInRight.delay(400).duration(500)}
+        style={styles.section}
+      >
+
         <TouchableOpacity
           style={[
-            styles.timeSelector,
+            styles.actionButton,
             !notificationsEnabled && styles.disabled
           ]}
           onPress={() => setShowTimePicker(true)}
           disabled={!notificationsEnabled}
         >
-          <View style={styles.timeSelectorContent}>
+          <View style={styles.actionButtonContent}>
             <Ionicons name="time-outline" size={24} color="#000" />
-            <View style={styles.timeTextContainer}>
+            <View style={styles.actionTextContainer}>
               <Text style={styles.timeLabel}>Heure de notification</Text>
               <Text style={styles.timeValue}>
                 {format(notificationTime, 'HH:mm')}
@@ -236,12 +243,7 @@ export default function SettingsScreen() {
           </View>
           <Ionicons name="chevron-forward" size={24} color="#000" />
         </TouchableOpacity>
-      </Animated.View>
 
-      <Animated.View 
-        entering={SlideInRight.delay(400).duration(500)}
-        style={styles.section}
-      >
         <TouchableOpacity
           style={styles.actionButton}
           onPress={exportData}
